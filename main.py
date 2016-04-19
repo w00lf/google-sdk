@@ -43,7 +43,7 @@ DOMAIN_GROUPS={
     u'sys': u'01opuj5n16j6lhr',
     u'ul': u'02250f4o2una4y6'
 }
-parser = argparse.ArgumentParser(description='Creates user in uchi.ru domain, add him to specified groups.')
+parser = argparse.ArgumentParser(description='Creates user in {0} domain, add him to specified groups.'.format(DOMAIN))
 parser.add_argument('user_names', metavar='NAME1 NAME2', type=str, nargs='+', help='Usernames to create, in format: "Name Surname", will be transliterated and email will be automaticly made from translit')
 parser.add_argument('--groups', dest='groups', default=['all', 'changes', 'exchange'], metavar='GROUP1 GROUP2', type=str, nargs='+', help='Groups')
 parser.add_argument('--office', dest='office', default=MOSCOW, type=str, help='Office the new worker will work, default Moscow')
