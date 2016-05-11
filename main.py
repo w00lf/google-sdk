@@ -1,4 +1,5 @@
 # encoding=utf8
+import os
 import sys
 import string
 import md5
@@ -12,8 +13,10 @@ parser = argparse.ArgumentParser(description='Creates user in {0} domain, add hi
 parser.add_argument('user_names', metavar='NAME1 NAME2', type=str, nargs='+', help='Usernames to create, in format: "Name Surname", will be transliterated and email will be automaticly made from translit')
 parser.add_argument('--groups', dest='groups', default=['all', 'changes', 'exchange'], metavar='GROUP1 GROUP2', type=str, nargs='+', help='Groups')
 parser.add_argument('--office', dest='office', default=MOSCOW, type=str, help='Office the new worker will work, default Moscow')
+parser.add_argument('--debug', dest='debug', default=False, type=bool, help='Print debug messages')
 
 args = parser.parse_args()
+DEBUG = args.debug
 
 def createdUser(service, userParams):
     result = service.users().insert(body=userParams).execute()
@@ -44,24 +47,52 @@ def confirmUsername(transliteratedUserName):
             sys.stdout.write("Please respond with 'yes' or 'no'\n")
 
 def createGroupsMembership(service, email):
-    print("Adding user {0} to groups: {1}".format(email, string.join(args.groups), ','))
+    if DEBUG:
+        print("Adding user {0} to groups: {1}".format(email, string.join(args.groups), ','))
     for groupName in args.groups:
-        print(createMembership(service, DOMAIN_GROUPS.get(groupName), email))
-    print("Adding user {0} to city group: {1}".format(email, args.office))
-    print(createMembership(service, DOMAIN_GROUPS.get(args.office), email))
+        result = createMembership(service, DOMAIN_GROUPS.get(groupName), email)
+        if DEBUG:
+            print(result)
+    if DEBUG:
+        print("Adding user {0} to city group: {1}".format(email, args.office))
+    result = createMembership(service, DOMAIN_GROUPS.get(args.office), email)
+    if DEBUG:
+        print(result)
+
+def printInstructions(email, emailPassword, cmsPassword):
+    template = unicode(open(INSTRUCTIONS_FILE_NAME, 'r').read(), 'utf8')
+    print template.format(email=email, emailPassword=emailPassword, cmsPassword=cmsPassword)
+
+def usage():
+    print "Create File '{0}' with variables 'email', 'emailPassword' and 'cmsPassword' to continue".format(INSTRUCTIONS_FILE_NAME)
+
+def meetAllPrerequirments():
+    return os.path.isfile(INSTRUCTIONS_FILE_NAME)
 
 def main():
     """Creates users with supplied creditinals
     """
+    if(not meetAllPrerequirments()):
+        usage()
+        exit()
+
     service = google_admin_api.initializeService(SCOPES)
+
     for userName in args.user_names:
         translitiratedUserName = confirmUsername(full_name_transliterator.transliterateFullName(userName))
         givenName, familyName = translitiratedUserName.strip().split(' ')
-        userParams = {'name': {'familyName': familyName, 'givenName': givenName }, 'changePasswordAtNextLogin': True, 'password': generatePass(translitiratedUserName), 'primaryEmail': generateDomainEmail(givenName, familyName) }
-        print(userParams)
+
+        emailPassword = generatePass(translitiratedUserName)
+        email = generateDomainEmail(givenName, familyName)
+
+        userParams = {'name': {'familyName': familyName, 'givenName': givenName }, 'changePasswordAtNextLogin': True, 'password': emailPassword, 'primaryEmail': email }
+        if DEBUG:
+            print(userParams)
         userResult = createdUser(service, userParams)
-        print(userResult)
+        if DEBUG:
+            print(userResult)
         createGroupsMembership(service, userResult.get('primaryEmail'))
+        printInstructions(email=email, emailPassword=emailPassword, cmsPassword=generatePass('cms' + translitiratedUserName))
 
 
 if __name__ == '__main__':

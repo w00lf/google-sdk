@@ -1,6 +1,7 @@
 import os
 
 MOSCOW='mos'
+INSTRUCTIONS_FILE_NAME = 'new_instructions.txt'
 DOMAIN=os.environ['GOOGLE_DOMAIN']
 PASS_SALT = os.environ['GOOGLE_PASS_SALT']
 SCOPES = ['https://www.googleapis.com/auth/admin.directory.group', 'https://www.googleapis.com/auth/admin.directory.user']
