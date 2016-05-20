@@ -82,7 +82,7 @@ def main():
         translitiratedUserName = confirmUsername(full_name_transliterator.transliterateFullName(userName))
         givenName, familyName = translitiratedUserName.strip().split(' ')
 
-        emailPassword = generatePass(translitiratedUserName)
+        emailPassword = generatePass(translitiratedUserName)[:8]
         email = generateDomainEmail(givenName, familyName)
 
         userParams = {'name': {'familyName': familyName, 'givenName': givenName }, 'changePasswordAtNextLogin': True, 'password': emailPassword, 'primaryEmail': email }
@@ -92,7 +92,7 @@ def main():
         if DEBUG:
             print(userResult)
         createGroupsMembership(service, userResult.get('primaryEmail'))
-        printInstructions(email=email, emailPassword=emailPassword, cmsPassword=generatePass('cms' + translitiratedUserName))
+        printInstructions(email=email, emailPassword=emailPassword, cmsPassword=generatePass('cms' + translitiratedUserName)[:8])
 
 
 if __name__ == '__main__':
